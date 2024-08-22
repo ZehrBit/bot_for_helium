@@ -1,0 +1,3 @@
+TELEGRAM_TOKEN = "<token>"
+
+TIME_FOR_SENDING = "19:00"
