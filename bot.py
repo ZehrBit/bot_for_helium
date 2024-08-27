@@ -22,12 +22,12 @@ async def send_messages():
     session = SessionLocal()
     chats = session.query(Chat).all()
     session.close()
-    logger.debug("Запрос к базе выполнен успешно")
+    logger.info("Запрос к базе выполнен успешно")
     message = await create_message()
     for chat in chats:
         try:
             await bot.send_message(chat.chat_id, message)
-            logger.debug(f"Сообщение отправлено в чат: {chat.chat_id}")
+            logger.info(f"Сообщение отправлено в чат: {chat.chat_id}")
         except Exception as e:
             logger.error(f"Ошибка отправки сообщения в чат: {chat.chat_id}: {e}")
 
@@ -46,10 +46,10 @@ async def create_message():
 
 @logger.catch(level="ERROR")
 async def timer():
-    logger.debug('Таймер запущен')
+    logger.info('Таймер запущен')
     """Запускает раз в сутки рассылку сообщений"""
     while True:
-        if dt.datetime.now().strftime("%H:%M") == config.TIME_FOR_SENDING:
+        if dt.datetime.now().strftime("%H:%M") == config.TIME_FOR_SENDING and dt.datetime.now().weekday() in config.WEEKDAY_FOR_SENDING:
             await send_messages()
             logger.info("Рассылка сообщений прошла")
         await asyncio.sleep(57)
@@ -84,8 +84,9 @@ async def user_add_or_kick_bot(event: ChatMemberUpdated):
 @dp.message(Command("get_price"))
 async def get_price(message: types.Message) -> None:
     logger.info(f'Получен запрос "/get_price" от пользователя: id - {message.chat.id}, Имя - {message.chat.first_name}, Никнейм - {message.chat.username}')
-    await message.answer('⏳ Получение данных...', parse_mode='HTML')
+    temp_message = await message.answer('⏳ Получение данных...', parse_mode='HTML')
     await message.answer(await create_message(), parse_mode='HTML')
+    await temp_message.delete()
     logger.info(f'Сообщение отправлено пользователю: id - {message.chat.id}, Имя - {message.chat.first_name}, Никнейм - {message.chat.username}')
 
 if __name__ == "__main__":
